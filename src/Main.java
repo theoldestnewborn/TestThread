@@ -1,20 +1,33 @@
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
+//        runDataRace(new TestThread(), new TestThread(), () -> TestThread.count);
+//        runDataRace(new TestLockThread(), new TestLockThread(), () -> TestLockThread.count);
+//        runDataRace(new TestAtomicThread(), new TestAtomicThread(), () -> TestAtomicThread.count.get());
+        runDataRace(new TestSynchronizedThread(), new TestSynchronizedThread(), () -> TestSynchronizedThread.count);
+    }
 
-        TestThread new1 = new TestThread("first");
-        TestThread new2 = new TestThread("second");
-        TestThread new3 = new TestThread("third");
-        
-        new3.start();
-        new3.join();
+    public static void runDataRace(Runnable first, Runnable second, GetThreadResult getResult) {
 
-        new2.start();
-        new2.join();
+        Thread new1 = new Thread(first);
+        Thread new2 = new Thread(second);
 
         new1.start();
-        new1.join();
+        new2.start();
 
-        System.out.println("finished");
-
+        try {
+            new1.join();
+            new2.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Result is - " + getResult.get());
     }
+
 }
+
+@FunctionalInterface
+interface GetThreadResult {
+    int get();
+}
+
+
